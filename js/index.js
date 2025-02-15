@@ -1,132 +1,154 @@
-document.getElementById("inicio").addEventListener("click", function() {
-    mostrarMenu();
+const productos = [
+    {
+        id: 1,
+        nombre: 'Mouse Gamer',
+        descripcion: 'Mouse ergonómico con iluminación RGB y alta precisión.',
+        img: 'https://s3-sa-east-1.amazonaws.com/saasargentina/oaPmQNJPQeMZynN9AOk5/imagen',
+        precio: 25000
+    },
+    {
+        id: 2,
+        nombre: 'Teclado Mecánico',
+        descripcion: 'Teclado mecánico con switches azules y retroiluminación RGB.',
+        img: 'https://xtrike-me.com.ar/media/2022/07/GK-979_1.png',
+        precio: 45000
+    },
+    {
+        id: 3,
+        nombre: 'Auriculares Inalámbricos',
+        descripcion: 'Auriculares con cancelación de ruido y batería de larga duración.',
+        img: 'https://static.bidcom.com.ar/publicacionesML/productos/ABLUE161/1000x1000-ABLUE161.jpg',
+        precio: 60000
+    },
+    {
+        id: 4,
+        nombre: 'Consola de Videojuegos',
+        descripcion: 'Consola de última generación con gráficos 4K y HDR.',
+        img: 'https://m.media-amazon.com/images/I/61nq7mC0tHL.jpg',
+        precio: 300000
+    },
+    {
+        id: 5,
+        nombre: 'Smartphone',
+        descripcion: 'Smartphone con pantalla AMOLED y cámara de alta resolución.',
+        img: 'https://macstore.com.pa/cdn/shop/files/IMG-14858961_a9aaa022-7161-4725-b040-50b02cc3cc84.jpg?v=1731598135&width=823',
+        precio: 150000
+    },
+    {
+        id: 6,
+        nombre: 'Monitor Curvo',
+        descripcion: 'Monitor curvo de 27 pulgadas con resolución Full HD y tasa de refresco de 144Hz.',
+        img: 'https://http2.mlstatic.com/D_NQ_NP_682090-MLA79556119294_102024-O.webp',
+        precio: 500000
+    }
+];
+
+const carrito = [];
+
+const containerCards = document.getElementById('containerCards');
+
+function agregarProducto() {
+    productos.forEach(producto => {
+        const card = document.createElement("article");
+        card.classList.add('col-lg-4', 'col-md-6', 'mb-4');
+        card.innerHTML = `
+            <div class="card h-100">
+                <img src="${producto.img}" class="card-img-top" alt="${producto.nombre}">
+                <div class="card-body">
+                    <h5 class="card-title">${producto.nombre}</h5>
+                    <p class="card-text">${producto.descripcion}</p>
+                    <p class="card-text"><strong>Precio: $${producto.precio}</strong></p>
+                </div>
+                <div class="card-footer">
+                    <button onclick="agregarCarrito(${producto.id})" class="btn btn-primary">Agregar al carrito</button>
+                </div>
+            </div>
+        `;
+        containerCards.appendChild(card);
+    });
+}
+
+function agregarCarrito(id) {
+    const prod = productos.find(producto => producto.id === id);
+    const prodCarrito = carrito.find(producto => producto.id === id);
+    if (prodCarrito) {
+        prodCarrito.cantidad++;
+    } else {
+        const newProd = { ...prod, cantidad: 1 };
+        carrito.push(newProd);
+    }
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+    console.log(carrito);
+}
+
+const cartItems = document.getElementById('cartItems');
+const subtotal = document.getElementById('subtotal');
+const envio = document.getElementById('envio');
+const total = document.getElementById('total');
+
+function mostrarCarrito() {
+    const cart = JSON.parse(localStorage.getItem('carrito')) || [];
+    console.log(cart);
+    if(cart){
+        cart.forEach(producto => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <th>${producto.nombre}</th>
+                <td>${producto.precio}</td>
+                <td>
+                    <button onclick="cambiarCantidad(${producto.id}, -1)" class="btn btn-secondary">-</button>
+                    ${producto.cantidad}
+                    <button onclick="cambiarCantidad(${producto.id}, 1)" class="btn btn-secondary">+</button>
+                </td>
+                <td>${producto.cantidad * producto.precio}</td>
+                <td><button onclick="eliminarProducto(${producto.id})" class="btn btn-danger">Eliminar</button></td>
+            `;
+            cartItems.appendChild(row);
+        });
+        const sub = cart.reduce((acc, prod) => acc + prod.precio * prod.cantidad, 0);
+        subtotal.textContent = "$"+sub;
+        if(sub >= 60000){
+            envio.textContent = "Gratis";
+            total.textContent = "$"+sub;
+        }else if(sub == 0){
+            envio.textContent = "$"+0;
+            total.textContent = "$"+0;
+        }else{
+            envio.textContent = "$"+5000;
+            total.textContent = "$"+(sub+5000);
+        }
+    }
+}
+
+function cambiarCantidad(id, cantidad) {
+    const cart = JSON.parse(localStorage.getItem('carrito')) || [];
+    const prodCarrito = cart.find(producto => producto.id === id);
+    if (prodCarrito) {
+        prodCarrito.cantidad += cantidad;
+        if (prodCarrito.cantidad <= 0) {
+            eliminarProducto(id);
+        } else {
+            localStorage.setItem('carrito', JSON.stringify(cart));
+            location.reload();
+        }
+    }
+}
+
+function eliminarProducto(id) {
+    const cart = JSON.parse(localStorage.getItem('carrito')) || [];
+    const index = cart.findIndex(producto => producto.id === id);
+    if (index !== -1) {
+        cart.splice(index, 1);
+        localStorage.setItem('carrito', JSON.stringify(cart));
+        location.reload(); 
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    const path = window.location.pathname;
+    if (path.includes('products.html')) {
+        agregarProducto();
+    } else if (path.includes('cart.html')) {
+        mostrarCarrito();
+    }
 });
-
-const usuarios = [];
-const productos = [];
-let id = 0;
-
-function mostrarMenu(){
-    let opcion;
-    do{
-        opcion = parseInt(prompt("Elija una opcion: \n 1. Ingresar \n 2. Registrarse \n 3. Salir"));
-        switch(opcion){
-            case 1:
-                ingreso();
-                break;
-            case 2:
-                registro();
-                break;
-            case 3:
-                alert("Gracias por visitarnos");
-                break;
-            default:
-                alert("Opcion invalida");
-                break;
-        }
-    }while(opcion != 3);
-}
-
-function registro(){
-    let nombre = prompt("Ingrese su nombre");
-    let user = prompt("Ingrese su nombre de usuario");
-    let password = prompt("Ingrese su contraseña");
-    let usuario;
-    if(nombre == "" || user == "" || password == ""){
-        alert("Debe llenar todos los campos");
-        mostrarMenu();
-    }else{
-        usuario = {
-            nombre: nombre,
-            user: user,
-            password: password
-        }
-    }
-    usuarios.push(usuario);
-    alert("Usuario registrado correctamente");
-}
-
-function ingreso(){
-    let user = prompt("Ingrese su nombre de usuario");
-    let password = prompt("Ingrese su contraseña");
-    let success = false;
-    for(let i of usuarios){
-        if(i.user == user && i.password == password){
-            alert("Bienvenido " + i.nombre);
-            success = true;
-            break;
-        }
-    }
-    if(!success){
-        alert("Usuario o contraseña incorrecta");
-        mostrarMenu();
-    }else{
-        mostrarOpciones();
-    }
-}
-
-function mostrarOpciones(){
-    let opcion, confirmacion;
-    do{
-        opcion = parseInt(prompt("Elija una opcion: \n 1. Agregar productos \n 2. Ver productos \n 3. Eliminar producto \n 4. Cerrar sesion"));
-        switch(opcion){
-            case 1:
-                confirmacion = confirm("¿Desea agregar un producto?");
-                while (confirmacion){
-                    agregarProducto();
-                    confirmacion = confirm("¿Desea agregar otro producto?");
-                }
-                break;
-            case 2:
-                verProductos();
-                break;
-            case 3:
-                eliminarProducto();
-                break;
-            case 4:
-                alert("Sesion cerrada");
-                break;
-            default:
-                alert("Opcion invalida");
-                break;
-        }
-    }while(opcion != 4);
-}
-
-function agregarProducto(){
-    let nombre, precio, cantidad;
-    id = id + 1;
-    nombre = prompt("Ingrese el nombre del producto");
-    precio = parseFloat(prompt("Ingrese el precio del producto"));	
-    cantidad = parseInt(prompt("Ingrese la cantidad del producto"));
-    let producto = {
-        id: id,
-        nombre: nombre,
-        precio: precio,
-        cantidad: cantidad
-    }
-    productos.push(producto);
-    alert("Producto agregado correctamente");
-}
-
-function verProductos(){
-    if(productos.length == 0){
-        alert("No hay productos registrados");
-    }else{
-        for(let i of productos){
-            alert("Codigo: " + i.id + "\nNombre: " + i.nombre + "\nPrecio: " + i.precio + "\nCantidad: " + i.cantidad + "\n");
-            console.log("Codigo: " + i.id + "\nNombre: " + i.nombre + "\nPrecio: " + i.precio + "\nCantidad: " + i.cantidad + "\n");
-        }
-    }
-}
-
-function eliminarProducto(){
-    let id = parseInt(prompt("Ingrese el codigo del producto"));
-    let index = productos.findIndex(x => x.id == id);
-    if(index != -1){
-        productos.splice(index, 1);
-        alert("Producto eliminado correctamente");
-    }else{
-        alert("Producto no encontrado");
-    }
-}
